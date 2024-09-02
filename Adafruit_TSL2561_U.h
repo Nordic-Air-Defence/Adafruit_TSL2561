@@ -35,17 +35,17 @@
 #define TSL2561_ADDR_HIGH (0x49)  ///< Default address (pin pulled high)
 
 // Lux calculations differ slightly for CS package
-//#define TSL2561_PACKAGE_CS                ///< Chip scale package
+// #define TSL2561_PACKAGE_CS                ///< Chip scale package
 #define TSL2561_PACKAGE_T_FN_CL ///< Dual Flat No-Lead package
 
 #define TSL2561_COMMAND_BIT (0x80) ///< Must be 1
-#define TSL2561_CLEAR_BIT                                                      \
-  (0x40) ///< Clears any pending interrupt (write 1 to clear)
+#define TSL2561_CLEAR_BIT \
+  (0x40)                         ///< Clears any pending interrupt (write 1 to clear)
 #define TSL2561_WORD_BIT (0x20)  ///< 1 = read/write word (rather than byte)
 #define TSL2561_BLOCK_BIT (0x10) ///< 1 = using block read/write
 
 #define TSL2561_CONTROL_POWERON (0x03) ///< Control register setting to turn on
-#define TSL2561_CONTROL_POWEROFF                                               \
+#define TSL2561_CONTROL_POWEROFF \
   (0x00) ///< Control register setting to turn off
 
 #define TSL2561_LUX_LUXSCALE (14)          ///< Scale by 2^14
@@ -107,6 +107,8 @@
 #define TSL2561_LUX_M8C (0x0000) ///< 0.000 * 2^LUX_SCALE
 
 // Auto-gain thresholds
+#define TSL2561_AGC_THI_1MS (4850)    ///< Max value at Ti 13ms = 5047
+#define TSL2561_AGC_TLO_1MS (100)     ///< Min value at Ti 13ms = 100
 #define TSL2561_AGC_THI_13MS (4850)   ///< Max value at Ti 13ms = 5047
 #define TSL2561_AGC_TLO_13MS (100)    ///< Min value at Ti 13ms = 100
 #define TSL2561_AGC_THI_101MS (36000) ///< Max value at Ti 101ms = 37177
@@ -115,20 +117,24 @@
 #define TSL2561_AGC_TLO_402MS (500)   ///< Min value at Ti 402ms = 500
 
 // Clipping thresholds
-#define TSL2561_CLIPPING_13MS                                                  \
+#define TSL2561_CLIPPING_1MS \
   (4900) ///< # Counts that trigger a change in gain/integration
-#define TSL2561_CLIPPING_101MS                                                 \
+#define TSL2561_CLIPPING_13MS \
+  (4900) ///< # Counts that trigger a change in gain/integration
+#define TSL2561_CLIPPING_101MS \
   (37000) ///< # Counts that trigger a change in gain/integration
-#define TSL2561_CLIPPING_402MS                                                 \
+#define TSL2561_CLIPPING_402MS \
   (65000) ///< # Counts that trigger a change in gain/integration
 
 // Delay for integration times
+#define TSL2561_DELAY_INTTIME_1MS (3)     ///< Wait 3ms for 1ms integration
 #define TSL2561_DELAY_INTTIME_13MS (15)   ///< Wait 15ms for 13ms integration
 #define TSL2561_DELAY_INTTIME_101MS (120) ///< Wait 120ms for 101ms integration
 #define TSL2561_DELAY_INTTIME_402MS (450) ///< Wait 450ms for 402ms integration
 
 /** TSL2561 I2C Registers */
-enum {
+enum
+{
   TSL2561_REGISTER_CONTROL = 0x00,          // Control/power register
   TSL2561_REGISTER_TIMING = 0x01,           // Set integration time register
   TSL2561_REGISTER_THRESHHOLDL_LOW = 0x02,  // Interrupt low threshold low-byte
@@ -146,14 +152,17 @@ enum {
 };
 
 /** Three options for how long to integrate readings for */
-typedef enum {
-  TSL2561_INTEGRATIONTIME_13MS = 0x00,  // 13.7ms
-  TSL2561_INTEGRATIONTIME_101MS = 0x01, // 101ms
-  TSL2561_INTEGRATIONTIME_402MS = 0x02  // 402ms
+typedef enum
+{
+  TSL2561_INTEGRATIONTIME_13MS = 0x00,  // INTEG = 00
+  TSL2561_INTEGRATIONTIME_101MS = 0x01, // INTEG = 01
+  TSL2561_INTEGRATIONTIME_402MS = 0x02, // INTEG = 10
+  TSL2561_INTEGRATIONTIME_MANUAL = 0x03 // INTEG = 11 (manual mode)
 } tsl2561IntegrationTime_t;
 
 /** TSL2561 offers 2 gain settings */
-typedef enum {
+typedef enum
+{
   TSL2561_GAIN_1X = 0x00,  // No gain
   TSL2561_GAIN_16X = 0x10, // 16x gain
 } tsl2561Gain_t;
@@ -164,7 +173,8 @@ typedef enum {
    Light Sensor
 */
 /**************************************************************************/
-class Adafruit_TSL2561_Unified : public Adafruit_Sensor {
+class Adafruit_TSL2561_Unified : public Adafruit_Sensor
+{
 public:
   Adafruit_TSL2561_Unified(uint8_t addr, int32_t sensorID = -1);
   boolean begin(void);
@@ -181,6 +191,12 @@ public:
   /* Unified Sensor API Functions */
   bool getEvent(sensors_event_t *);
   void getSensor(sensor_t *);
+
+  /* Custom Integration Time Functions */
+  void startManualIntegration(); // Start manual integration
+  void stopManualIntegration();  // Stop manual integration
+  // In the Adafruit_TSL2561_Unified class definition
+  bool getEventCustom(sensors_event_t *event, uint32_t integrationTime);
 
 private:
   TwoWire *_i2c;
